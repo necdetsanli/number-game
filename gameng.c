@@ -1,11 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <time.h>
+#include <sqlite3.h>
+#include <string.h>
 #include "gameng.h"
+#include "scoreboard.h"
 
 void randomize(void)
 {
 	srand((unsigned)time(NULL));
+}
+
+void sgets(char* p)
+{
+	int c;
+
+    clear_input_buffer();
+
+	while ((c = getchar()) != '\n') {
+		*p++ = (char)c;
+	}
+
+	*p = '\0';
 }
 
 void clear_input_buffer(void)
@@ -13,8 +30,9 @@ void clear_input_buffer(void)
 	int c;
 
 	while ((c = getchar()) != '\n' && c != EOF)
-		; //null statement
+		;
 }
+
 
 void print_welcome(void)
 {
@@ -45,15 +63,12 @@ int generate_num(void)
     return rand() % 10; 
 }
 
-void game_eng(void)
+int game_eng(void)
 {
     int guess, num, score, round, streak;
-    int c; 
+    int total_points, ds_count, ts_count;
 
-    score = round = streak = 0; 
-    
-    randomize();
-    print_welcome();
+    total_points = ds_count = ts_count = score = round = streak = 0; 
 
     while (1) {
         printf("\n\nROUND %00d\n", round);
@@ -76,14 +91,53 @@ void game_eng(void)
                 --streak;
         }
 
-        if (streak == STREAK) {
-            printf("Streak!!!!\n");
+        if (streak == DOUBLE_STREAK) {
+            printf("Double Streak!!!!\n");
+            ds_count++;
+        }
+
+         if (streak == TRIPLE_STREAK) {
+            printf("Triple Streak!!!!\n");
+            ts_count++;
             streak = 0;
         }
 
         ++round;
     }
 
-    print_score(score, round);    
+    total_points = 2 * ds_count + 3 * ts_count + score;
+
+    print_score(score, round);
+
+    return total_points;   
 }
 
+char* get_username(void)
+{
+    char* username = (char*)malloc(sizeof(char) * 64);
+    
+    printf("Username: ");
+    sgets(username);
+    putchar('\n');
+
+    return username;
+}
+
+void save_to_db(sqlite3* db, int score)
+{
+    int c;
+    char* username;
+
+    clear_input_buffer();
+
+    printf("Would you like to save your score to scoreboard(y/N)?: ");
+    c = getchar();
+    putchar('\n');
+
+    if (tolower(c) == 'y') {
+        username = get_username();
+        insert_table(db, username, score);
+    }
+    
+    free(username);
+}   
