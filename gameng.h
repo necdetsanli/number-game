@@ -1,3 +1,6 @@
+#ifndef GAMENG_H
+#define GAMENG_H
+
 #include <time.h>
 #include <sqlite3.h>
 
@@ -13,3 +16,5 @@ void print_score(int score, int round);
 int generate_num(void);
 int game_eng(void);
 void save_to_db(sqlite3* db, int score);
+
+#endif
